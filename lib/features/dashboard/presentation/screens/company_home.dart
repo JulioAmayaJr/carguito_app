@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:carguito_app/core/utils/app_bottom_menu.dart';
+import '../../../../core/utils/role_bottom_menu.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class CompanyHome extends StatelessWidget {
@@ -12,7 +12,7 @@ class CompanyHome extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F8),
-      bottomNavigationBar: const AppBottomMenu(currentIndex: 0),
+      bottomNavigationBar: const RoleBottomMenu(),
       body: SafeArea(
         child: Column(
           children: [

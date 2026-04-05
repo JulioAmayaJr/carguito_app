@@ -11,6 +11,8 @@ class PlatformConfigScreen extends StatefulWidget {
 
 class _PlatformConfigScreenState extends State<PlatformConfigScreen> {
   final _feeCtrl = TextEditingController();
+  final _plateCtrl = TextEditingController();
+  final _odometerCtrl = TextEditingController();
   final _bankCtrl = TextEditingController();
   final _accountCtrl = TextEditingController();
   final _holderCtrl = TextEditingController();
@@ -21,9 +23,13 @@ class _PlatformConfigScreenState extends State<PlatformConfigScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PlatformProvider>().loadData().then((_) {
         final prov = context.read<PlatformProvider>();
-        final fee =
-            prov.config['default_service_fee_amount']?.toString() ?? '0';
+        final fee = prov.config['default_service_fee_amount']?.toString() ?? '0';
+        final plate = prov.config['vehicle_plate']?.toString() ?? '';
+        final odo = prov.config['odometer']?.toString() ?? '0';
+
         _feeCtrl.text = fee;
+        _plateCtrl.text = plate;
+        _odometerCtrl.text = odo;
       });
     });
   }
@@ -42,16 +48,36 @@ class _PlatformConfigScreenState extends State<PlatformConfigScreen> {
                 const Text('Tarifa (Fee) Global por Envío',
                     style:
                         TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
                 TextField(
                     controller: _feeCtrl,
                     decoration: const InputDecoration(
                         labelText: 'Monto (USD)', border: OutlineInputBorder()),
                     keyboardType: TextInputType.number),
+                const SizedBox(height: 20),
+                const Text('Datos del Vehículo Principal',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                TextField(
+                    controller: _plateCtrl,
+                    decoration: const InputDecoration(
+                        labelText: 'Placas del Vehículo', border: OutlineInputBorder())),
                 const SizedBox(height: 10),
+                TextField(
+                    controller: _odometerCtrl,
+                    decoration: const InputDecoration(
+                        labelText: 'Odómetro (Km)', border: OutlineInputBorder()),
+                    keyboardType: TextInputType.number),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => prov.updateConfig(
-                      double.tryParse(_feeCtrl.text) ?? 0, 'USD'),
-                  child: const Text('Guardar Tarifa'),
+                      double.tryParse(_feeCtrl.text) ?? 0, 
+                      'USD',
+                      _plateCtrl.text,
+                      int.tryParse(_odometerCtrl.text) ?? 0,
+                  ),
+                  child: const Text('Guardar Configuración'),
                 ),
                 const Divider(height: 40),
                 const Text('Cuentas Bancarias de Plataforma',

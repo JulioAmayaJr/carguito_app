@@ -9,7 +9,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:carguito_app/core/utils/app_bottom_menu.dart';
+import 'package:carguito_app/core/auth/role_access.dart';
+import 'package:carguito_app/core/utils/role_bottom_menu.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class CompanyQrScreen extends StatefulWidget {
@@ -193,7 +194,8 @@ class _CompanyQrScreenState extends State<CompanyQrScreen> {
   Widget build(BuildContext context) {
     final auth = context.read<AuthProvider>();
     final companyId = auth.user?.companyId;
-    final role = auth.user?.role;
+    final user = auth.user;
+    final isSellerView = RoleAccess.isSellerPortalUser(user);
 
     if (companyId == null) {
       return const Scaffold(
@@ -212,11 +214,11 @@ class _CompanyQrScreenState extends State<CompanyQrScreen> {
 
     final sellerCode = 'carguito::seller::$companyId';
     final recipientCode = 'carguito::recipient::$companyId';
-    final showSeller = role == 'company_admin';
+    final showSeller = RoleAccess.showsCompanyQrAdminLayout(user);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F4F7),
-      bottomNavigationBar: const AppBottomMenu(currentIndex: 4),
+      bottomNavigationBar: const RoleBottomMenu(),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 10, 18, 120),
@@ -224,7 +226,7 @@ class _CompanyQrScreenState extends State<CompanyQrScreen> {
             Row(
               children: [
                 GestureDetector(
-                  onTap: () => context.go('/settings'),
+                  onTap: () => context.go(AppRoutes.settings),
                   child: Container(
                     width: 42,
                     height: 42,
@@ -335,7 +337,7 @@ class _CompanyQrScreenState extends State<CompanyQrScreen> {
             ],
             _QrSectionCard(
               title: 'Clientes / Destinatarios',
-              subtitle: role == 'seller'
+              subtitle: isSellerView
                   ? 'Muestra este QR a tus clientes para que se registren fácilmente.'
                   : 'Haz que tus usuarios escaneen este QR para darse de alta en tu lista de clientes.',
               code: recipientCode,
@@ -345,7 +347,7 @@ class _CompanyQrScreenState extends State<CompanyQrScreen> {
               onDownloadPdf: () => _downloadSinglePdf(
                 qrKey: _recipientQrKey,
                 title: 'Clientes / Destinatarios',
-                subtitle: role == 'seller'
+                subtitle: isSellerView
                     ? 'Muestra este QR a tus clientes para que se registren fácilmente.'
                     : 'Haz que tus usuarios escaneen este QR para darse de alta en tu lista de clientes.',
                 code: recipientCode,

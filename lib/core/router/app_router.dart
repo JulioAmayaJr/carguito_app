@@ -32,6 +32,9 @@ import '../../features/collection_points/presentation/screens/collection_points_
 import '../../features/delivery_points/presentation/screens/delivery_points_list_screen.dart';
 import '../../features/delivery_points/presentation/screens/delivery_points_form_screen.dart';
 
+import '../../features/vehicles/presentation/screens/vehicles_list_screen.dart';
+import '../../features/vehicles/presentation/screens/vehicles_form_screen.dart';
+
 import '../../features/packages/presentation/screens/packages_list_screen.dart';
 import '../../features/packages/presentation/screens/packages_form_screen.dart';
 
@@ -44,9 +47,10 @@ import '../../features/fees/presentation/screens/fees_list_screen.dart';
 import '../../features/bank_accounts/presentation/screens/bank_accounts_list_screen.dart';
 import '../../features/bank_accounts/presentation/screens/bank_accounts_form_screen.dart';
 
-import '../../features/notifications/presentation/screens/notifications_list_screen.dart';
-
+import '../../features/shipments/presentation/screens/delivery_confirmation_screen.dart';
+import '../../features/shipments/presentation/screens/driver_routes_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../auth/role_access.dart';
 
 class AppRouter {
   final AuthProvider authProvider;
@@ -54,176 +58,185 @@ class AppRouter {
   AppRouter(this.authProvider);
 
   late final GoRouter router = GoRouter(
-    initialLocation: '/',
+    initialLocation: AppRoutes.splash,
     refreshListenable: authProvider,
     redirect: (context, state) {
       final isInitialized = authProvider.isInitialized;
       final isAuthenticated = authProvider.isAuthenticated;
       final user = authProvider.user;
 
-      if (!isInitialized) return '/';
+      if (!isInitialized) return AppRoutes.splash;
 
+      final path = state.uri.path;
       final isLoginPath =
-          state.uri.path == '/login' || state.uri.path == '/public/register';
+          path == AppRoutes.login || path == AppRoutes.publicRegister;
 
       if (!isAuthenticated && !isLoginPath) {
-        return '/login';
+        return AppRoutes.login;
       }
 
-      if (isAuthenticated && (isLoginPath || state.uri.path == '/')) {
-        if (user?.role == 'platform_admin') return '/platform/home';
-        if (user?.role == 'company_admin') return '/company/home';
-        if (user?.role == 'seller') return '/seller/home';
-        if (user?.role == 'recipient') return '/recipient/home';
-        return '/employee/home';
+      if (isAuthenticated &&
+          user != null &&
+          (isLoginPath || path == AppRoutes.splash)) {
+        return RoleAccess.homeFor(user);
+      }
+
+      if (isAuthenticated && user != null) {
+        if (!RoleAccess.isPublicPath(path) && !RoleAccess.isPathAllowed(user, path)) {
+          return RoleAccess.homeFor(user);
+        }
       }
 
       return null;
     },
     routes: [
-      GoRoute(path: '/', builder: (_, __) => const SplashPage()),
-      GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
+      GoRoute(path: AppRoutes.splash, builder: (_, __) => const SplashPage()),
+      GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginPage()),
       GoRoute(
-          path: '/public/register',
+          path: AppRoutes.publicRegister,
           builder: (_, __) => const PublicRegistrationScreen()),
-      GoRoute(path: '/company/qr', builder: (_, __) => const CompanyQrScreen()),
-      GoRoute(path: '/platform/home', builder: (_, __) => const PlatformHome()),
-      GoRoute(path: '/company/home', builder: (_, __) => const CompanyHome()),
-      GoRoute(path: '/employee/home', builder: (_, __) => const EmployeeHome()),
-      GoRoute(path: '/seller/home', builder: (_, __) => const SellerHome()),
+      GoRoute(path: AppRoutes.companyQr, builder: (_, __) => const CompanyQrScreen()),
+      GoRoute(path: AppRoutes.platformHome, builder: (_, __) => const PlatformHome()),
+      GoRoute(path: AppRoutes.companyHome, builder: (_, __) => const CompanyHome()),
+      GoRoute(path: AppRoutes.employeeHome, builder: (_, __) => const EmployeeHome()),
+      GoRoute(path: AppRoutes.sellerHome, builder: (_, __) => const SellerHome()),
       GoRoute(
-          path: '/recipient/home', builder: (_, __) => const RecipientHome()),
+          path: AppRoutes.recipientHome, builder: (_, __) => const RecipientHome()),
       GoRoute(
-          path: '/platform/config',
+          path: AppRoutes.platformConfig,
           builder: (_, __) => const PlatformConfigScreen()),
 
-      // Companies
       GoRoute(
-          path: '/companies',
+          path: AppRoutes.companies,
           name: 'companiesList',
           builder: (_, __) => const CompaniesListScreen()),
       GoRoute(
-          path: '/companies/new',
+          path: AppRoutes.companiesNew,
           name: 'newCompany',
           builder: (_, __) => const CompaniesFormScreen()),
       GoRoute(
-          path: '/companies/edit',
+          path: AppRoutes.companiesEdit,
           name: 'editCompany',
           builder: (_, state) => CompaniesFormScreen(
               company: state.extra as Map<String, dynamic>)),
       GoRoute(
-  path: '/settings',
-  name: 'settings',
-  builder: (_, __) => const SettingsScreen(),
-),
-      // Branches
+          path: AppRoutes.settings,
+          name: 'settings',
+          builder: (_, __) => const SettingsScreen(),
+      ),
       GoRoute(
-          path: '/branches', builder: (_, __) => const BranchesListScreen()),
+          path: AppRoutes.branches, builder: (_, __) => const BranchesListScreen()),
       GoRoute(
-          path: '/branches/new',
+          path: AppRoutes.branchesNew,
           builder: (_, __) => const BranchesFormScreen()),
       GoRoute(
-          path: '/branches/edit',
+          path: AppRoutes.branchesEdit,
           builder: (context, state) =>
               BranchesFormScreen(item: state.extra as Map<String, dynamic>)),
 
-      // Employees
       GoRoute(
-          path: '/employees', builder: (_, __) => const EmployeesListScreen()),
+          path: AppRoutes.employees, builder: (_, __) => const EmployeesListScreen()),
       GoRoute(
-          path: '/employees/new',
+          path: AppRoutes.employeesNew,
           builder: (_, __) => const EmployeesFormScreen()),
       GoRoute(
-          path: '/employees/edit',
+          path: AppRoutes.employeesEdit,
           builder: (context, state) =>
               EmployeesFormScreen(item: state.extra as Map<String, dynamic>)),
 
-      // Sellers
-      GoRoute(path: '/sellers', builder: (_, __) => const SellersListScreen()),
+      GoRoute(path: AppRoutes.sellers, builder: (_, __) => const SellersListScreen()),
       GoRoute(
-          path: '/sellers/new', builder: (_, __) => const SellersFormScreen()),
+          path: AppRoutes.sellersNew, builder: (_, __) => const SellersFormScreen()),
       GoRoute(
-          path: '/sellers/edit',
+          path: AppRoutes.sellersEdit,
           builder: (context, state) =>
               SellersFormScreen(item: state.extra as Map<String, dynamic>)),
 
-      // Recipients
       GoRoute(
-          path: '/recipients',
+          path: AppRoutes.recipients,
           builder: (_, __) => const RecipientsListScreen()),
       GoRoute(
-          path: '/recipients/new',
+          path: AppRoutes.recipientsNew,
           builder: (_, __) => const RecipientsFormScreen()),
       GoRoute(
-          path: '/recipients/edit',
+          path: AppRoutes.recipientsEdit,
           builder: (context, state) =>
               RecipientsFormScreen(item: state.extra as Map<String, dynamic>)),
 
-      // Collection Points
       GoRoute(
-          path: '/collection_points',
+          path: AppRoutes.collectionPoints,
           builder: (_, __) => const CollectionPointsListScreen()),
       GoRoute(
-          path: '/collection_points/new',
+          path: AppRoutes.collectionPointsNew,
           builder: (_, __) => const CollectionPointsFormScreen()),
       GoRoute(
-          path: '/collection_points/edit',
+          path: AppRoutes.collectionPointsEdit,
           builder: (context, state) => CollectionPointsFormScreen(
               item: state.extra as Map<String, dynamic>)),
 
-      // Delivery Points
       GoRoute(
-          path: '/delivery_points',
+          path: AppRoutes.deliveryPoints,
           builder: (_, __) => const DeliveryPointsListScreen()),
       GoRoute(
-          path: '/delivery_points/new',
+          path: AppRoutes.deliveryPointsNew,
           builder: (_, __) => const DeliveryPointsFormScreen()),
       GoRoute(
-          path: '/delivery_points/edit',
+          path: AppRoutes.deliveryPointsEdit,
           builder: (context, state) => DeliveryPointsFormScreen(
               item: state.extra as Map<String, dynamic>)),
 
-      // Packages
       GoRoute(
-          path: '/packages', builder: (_, __) => const PackagesListScreen()),
+          path: AppRoutes.vehicles,
+          builder: (_, __) => const VehiclesListScreen()),
       GoRoute(
-          path: '/packages/new',
+          path: AppRoutes.vehiclesNew,
+          builder: (_, __) => const VehiclesFormScreen()),
+      GoRoute(
+          path: AppRoutes.vehiclesEdit,
+          builder: (context, state) => VehiclesFormScreen(
+              item: state.extra as Map<String, dynamic>)),
+
+      GoRoute(
+          path: AppRoutes.packages, builder: (_, __) => const PackagesListScreen()),
+      GoRoute(
+          path: AppRoutes.packagesNew,
           builder: (_, __) => const PackagesFormScreen()),
       GoRoute(
-          path: '/packages/edit',
+          path: AppRoutes.packagesEdit,
           builder: (context, state) =>
               PackagesFormScreen(item: state.extra as Map<String, dynamic>)),
 
-      // Shipments
       GoRoute(
-          path: '/shipments', builder: (_, __) => const ShipmentsListScreen()),
+          path: AppRoutes.shipments, builder: (_, __) => const ShipmentsListScreen()),
       GoRoute(
-          path: '/shipments/new',
+          path: AppRoutes.shipmentsNew,
           builder: (_, __) => const ShipmentsFormScreen()),
       GoRoute(
-          path: '/shipments/edit',
+          path: AppRoutes.shipmentsEdit,
           builder: (context, state) =>
               ShipmentsFormScreen(item: state.extra as Map<String, dynamic>)),
 
-      // Bank Accounts
       GoRoute(
-          path: '/bank_accounts',
+          path: AppRoutes.bankAccounts,
           builder: (_, __) => const BankAccountsListScreen()),
       GoRoute(
-          path: '/bank_accounts/new',
+          path: AppRoutes.bankAccountsNew,
           builder: (_, __) => const BankAccountsFormScreen()),
       GoRoute(
-          path: '/bank_accounts/edit',
+          path: AppRoutes.bankAccountsEdit,
           builder: (context, state) => BankAccountsFormScreen(
               item: state.extra as Map<String, dynamic>)),
 
-      // Other generic
       GoRoute(
-          path: '/payments', builder: (_, __) => const PaymentsListScreen()),
-      GoRoute(path: '/fees', builder: (_, __) => const FeesListScreen()),
+          path: AppRoutes.payments, builder: (_, __) => const PaymentsListScreen()),
+      GoRoute(path: AppRoutes.fees, builder: (_, __) => const FeesListScreen()),
       GoRoute(
-          path: '/notifications',
-          builder: (_, __) => const NotificationsListScreen()),
+          path: AppRoutes.shipmentsDelivery,
+          builder: (context, state) =>
+              DeliveryConfirmationScreen(item: state.extra as Map<String, dynamic>)),
+      GoRoute(
+          path: AppRoutes.shipmentsRoutes,
+          builder: (_, __) => const DriverRoutesScreen()),
     ],
   );
 }

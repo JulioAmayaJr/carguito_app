@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../auth/role_access.dart';
 
-class AppBottomMenu extends StatelessWidget {
-  final int currentIndex;
-
-  const AppBottomMenu({
-    super.key,
-    required this.currentIndex,
-  });
+/// Bottom navigation driven entirely by [RoleAccess.bottomNavItems].
+class RoleBottomMenu extends StatelessWidget {
+  const RoleBottomMenu({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.read<AuthProvider>();
+    final items = RoleAccess.bottomNavItems(auth.user);
+    final location = GoRouterState.of(context).uri.path;
+    final currentIndex = RoleAccess.bottomNavSelectedIndex(location, items);
+
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
+        left: 12,
+        right: 12,
         top: 10,
         bottom: MediaQuery.of(context).padding.bottom > 0
             ? MediaQuery.of(context).padding.bottom
@@ -35,38 +43,16 @@ class AppBottomMenu extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _NavItem(
-            icon: Icons.home_rounded,
-            label: 'Inicio',
-            selected: currentIndex == 0,
-            onTap: () => context.go('/seller/home'),
-          ),
-          _NavItem(
-            icon: Icons.local_shipping_outlined,
-            label: 'Paquetes',
-            selected: currentIndex == 1,
-            onTap: () => context.go('/packages'),
-          ),
-          _NavItem(
-            icon: Icons.location_on_rounded,
-            label: 'Envíos',
-            selected: currentIndex == 2,
-            onTap: () => context.go('/shipments'),
-          ),
-          _NavItem(
-            icon: Icons.account_balance_wallet_rounded,
-            label: 'Pagos',
-            selected: currentIndex == 3,
-            onTap: () => context.go('/payments'),
-          ),
-          _NavItem(
-            icon: Icons.settings_rounded,
-            label: 'Ajustes',
-            selected: currentIndex == 4,
-            onTap: () => context.go('/settings'),
-          ),
-        ],
+        children: items.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final item = entry.value;
+          return _NavItem(
+            icon: item.icon,
+            label: item.label,
+            selected: currentIndex == idx,
+            onTap: () => context.go(item.route),
+          );
+        }).toList(),
       ),
     );
   }
@@ -87,33 +73,33 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const selectedColor = Color(0xFFE3A521);
-    const normalColor = Color(0xFF6B7280);
+    const selectedColor = Color(0xFFF4B83A);
+    const normalColor = Color(0xFF9CA3AF);
 
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFFFF6DF) : Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
+          color: selected ? const Color(0xFFFFF7E6) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 28,
+              size: 26,
               color: selected ? selectedColor : normalColor,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 color: selected ? selectedColor : normalColor,
               ),

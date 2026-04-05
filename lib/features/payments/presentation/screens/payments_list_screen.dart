@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
-import 'package:carguito_app/core/utils/app_bottom_menu.dart';
+import 'package:carguito_app/core/utils/role_bottom_menu.dart';
 import '../providers/payments_provider.dart';
 
 class PaymentsListScreen extends StatefulWidget {
@@ -292,7 +291,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F4F7),
-      bottomNavigationBar: const AppBottomMenu(currentIndex: 3),
+      bottomNavigationBar: const RoleBottomMenu(),
       body: SafeArea(
         child: provider.isLoading
             ? const Center(child: CircularProgressIndicator())

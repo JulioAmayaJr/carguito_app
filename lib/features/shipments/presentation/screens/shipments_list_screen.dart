@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:carguito_app/core/utils/app_bottom_menu.dart';
+import 'package:carguito_app/core/auth/role_access.dart';
+import 'package:carguito_app/core/utils/role_bottom_menu.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/shipments_provider.dart';
 
 class ShipmentsListScreen extends StatefulWidget {
@@ -185,6 +187,10 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
     Map<String, dynamic> item,
     ShipmentsProvider provider,
   ) {
+    final auth = context.read<AuthProvider>();
+    final isDriver = RoleAccess.isDriverUser(auth.user);
+    final isInTransit = _statusLabel(item['status']).toLowerCase() == 'en tránsito';
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -197,7 +203,7 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
             borderRadius: BorderRadius.circular(26),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
+                color: Colors.black.withOpacity(0.08),
                 blurRadius: 22,
                 offset: const Offset(0, 10),
               ),
@@ -224,44 +230,60 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
                 ),
               ),
               const SizedBox(height: 18),
-              _ShipmentActionTile(
-                icon: Icons.edit_outlined,
-                iconColor: const Color(0xFFF4A91F),
-                title: 'Editar envío',
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  context.push('/shipments/edit', extra: item);
-                },
-              ),
-              const SizedBox(height: 10),
-              _ShipmentActionTile(
-                icon: Icons.delete_outline_rounded,
-                iconColor: const Color(0xFFDC2626),
-                title: 'Eliminar envío',
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('Confirmar eliminación'),
-                      content: const Text('¿Desea eliminar este registro?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => ctx.pop(),
-                          child: const Text('Cancelar'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            ctx.pop();
-                            provider.remove(item['id']);
-                          },
-                          child: const Text('Eliminar'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+              
+              if (isDriver && isInTransit) ...[
+                _ShipmentActionTile(
+                  icon: Icons.check_circle_outline_rounded,
+                  iconColor: const Color(0xFF10B981),
+                  title: 'Confirmar Entrega',
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    context.push(AppRoutes.shipmentsDelivery, extra: item);
+                  },
+                ),
+                const SizedBox(height: 10),
+              ],
+
+              if (RoleAccess.canManageShipments(auth.user)) ...[
+                _ShipmentActionTile(
+                  icon: Icons.edit_outlined,
+                  iconColor: const Color(0xFFF4A91F),
+                  title: 'Editar envío',
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    context.push(AppRoutes.shipmentsEdit, extra: item);
+                  },
+                ),
+                const SizedBox(height: 10),
+                _ShipmentActionTile(
+                  icon: Icons.delete_outline_rounded,
+                  iconColor: const Color(0xFFDC2626),
+                  title: 'Eliminar envío',
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Confirmar eliminación'),
+                        content: const Text('¿Desea eliminar este registro?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => ctx.pop(),
+                            child: const Text('Cancelar'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              ctx.pop();
+                              provider.remove(item['id']);
+                            },
+                            child: const Text('Eliminar'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
             ],
           ),
         );
@@ -272,19 +294,25 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ShipmentsProvider>();
+    final auth = context.read<AuthProvider>();
+    final isDriver = RoleAccess.isDriverUser(auth.user);
+    final canManageShipments = RoleAccess.canManageShipments(auth.user);
+
     final filteredItems = _filteredItems(provider.items);
     final activeItems = _activeItems(filteredItems);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F6F8),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/shipments/new'),
-        backgroundColor: const Color(0xFFF4A91F),
-        elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        child: const Icon(Icons.add_rounded, size: 30, color: Colors.white),
-      ),
-      bottomNavigationBar: const AppBottomMenu(currentIndex: 2),
+      floatingActionButton: canManageShipments
+        ? FloatingActionButton(
+            onPressed: () => context.push(AppRoutes.shipmentsNew),
+            backgroundColor: const Color(0xFFF4A91F),
+            elevation: 6,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            child: const Icon(Icons.add_rounded, size: 30, color: Colors.white),
+          )
+        : null,
+      bottomNavigationBar: const RoleBottomMenu(),
       body: SafeArea(
         child: provider.isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -305,7 +333,10 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
                 : ListView(
                     padding: const EdgeInsets.fromLTRB(14, 8, 14, 110),
                     children: [
-                      const _TopIllustrationCard(),
+                      _TopIllustrationCard(
+                        showLogisticsShortcuts: RoleAccess.canNavigate(
+                            auth.user, AppRoutes.collectionPoints),
+                      ),
                       const SizedBox(height: 16),
                       const Text(
                         'Mis envíos',
@@ -410,7 +441,9 @@ class _ShipmentsListScreenState extends State<ShipmentsListScreen> {
 }
 
 class _TopIllustrationCard extends StatelessWidget {
-  const _TopIllustrationCard();
+  const _TopIllustrationCard({this.showLogisticsShortcuts = true});
+
+  final bool showLogisticsShortcuts;
 
   @override
   Widget build(BuildContext context) {
@@ -439,26 +472,27 @@ class _TopIllustrationCard extends StatelessWidget {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _QuickRouteCard(
-                    title: 'Puntos de\nrecolecta',
-                    onTap: () => context.push('/collection_points'),
+          if (showLogisticsShortcuts)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _QuickRouteCard(
+                      title: 'Puntos de\nrecolecta',
+                      onTap: () => context.push(AppRoutes.collectionPoints),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _QuickRouteCard(
-                    title: 'Puntos de\nentrega',
-                    onTap: () => context.push('/delivery_points'),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _QuickRouteCard(
+                      title: 'Puntos de\nentrega',
+                      onTap: () => context.push(AppRoutes.deliveryPoints),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );

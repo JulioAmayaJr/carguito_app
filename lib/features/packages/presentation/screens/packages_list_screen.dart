@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:carguito_app/core/utils/app_bottom_menu.dart';
+import 'package:carguito_app/core/auth/role_access.dart';
+import 'package:carguito_app/core/utils/role_bottom_menu.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/packages_provider.dart';
 
@@ -249,9 +250,7 @@ class _PackagesListScreenState extends State<PackagesListScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<PackagesProvider>();
     final auth = context.watch<AuthProvider>();
-    final canEdit = auth.user?.role == 'company_admin' ||
-        auth.user?.role == 'company_employee' ||
-        auth.user?.role == 'platform_admin';
+    final canEdit = RoleAccess.canManagePackages(auth.user);
 
     final items = _filteredItems(provider.items.cast<Map<String, dynamic>>());
     final totalCount = provider.items.length;
@@ -277,7 +276,7 @@ class _PackagesListScreenState extends State<PackagesListScreen> {
               ),
             )
           : null,
-      bottomNavigationBar: const AppBottomMenu(currentIndex: 1),
+      bottomNavigationBar: const RoleBottomMenu(),
       body: SafeArea(
         child: Column(
           children: [
@@ -287,7 +286,12 @@ class _PackagesListScreenState extends State<PackagesListScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.go('/company/home'),
+                    onTap: () {
+                      final u = context.read<AuthProvider>().user;
+                      if (u != null) {
+                        context.go(RoleAccess.homeFor(u));
+                      }
+                    },
                     child: Container(
                       width: 42,
                       height: 42,

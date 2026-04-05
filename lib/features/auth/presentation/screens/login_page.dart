@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/auth/role_access.dart';
 import '../providers/auth_provider.dart';
 
 class LoginPage extends StatefulWidget {
@@ -11,8 +12,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _emailController = TextEditingController(text: 'jejeje@gmail.com');
-  final _passwordController = TextEditingController(text: 'password123');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   bool _obscurePassword = true;
@@ -88,15 +89,7 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      final role = auth.user!.role;
-
-      if (role == 'platform_admin') {
-        context.go('/platform/home');
-      } else if (role == 'company_admin') {
-        context.go('/company/home');
-      } else {
-        context.go('/employee/home');
-      }
+      context.go(RoleAccess.homeFor(auth.user!));
     } catch (e) {
       if (!mounted) {
         return;
@@ -357,7 +350,7 @@ class _LoginPageState extends State<LoginPage> {
                               onPressed: auth.isLoading
                                   ? null
                                   : () {
-                                      context.push('/public/register');
+                                      context.push(AppRoutes.publicRegister);
                                     },
                               style: OutlinedButton.styleFrom(
                                 backgroundColor: Colors.white,
@@ -413,7 +406,7 @@ class _LoginPageState extends State<LoginPage> {
                                 onTap: auth.isLoading
                                     ? null
                                     : () {
-                                        context.push('/public/register');
+                                        context.push(AppRoutes.publicRegister);
                                       },
                                 child: const Text(
                                   'Escanea el QR aquí',

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:carguito_app/core/utils/app_bottom_menu.dart';
+import 'package:provider/provider.dart';
+import 'package:carguito_app/core/auth/role_access.dart';
+import 'package:carguito_app/core/utils/role_bottom_menu.dart';
+import 'package:carguito_app/features/auth/presentation/providers/auth_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -24,9 +27,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final showAdminSection =
+        RoleAccess.showCompanyAdministrationInSettings(context.read<AuthProvider>().user);
+
     return Scaffold(
       backgroundColor: _backgroundColor,
-      bottomNavigationBar: const AppBottomMenu(currentIndex: 4),
+      bottomNavigationBar: const RoleBottomMenu(),
       body: SafeArea(
         child: Column(
           children: [
@@ -55,47 +61,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 18),
-                  _buildSectionTitle('Administración'),
-                  const SizedBox(height: 10),
-                  _buildGroupCard(
-                    children: [
-                      _buildArrowTile(
-                        icon: Icons.people_outline_rounded,
-                        title: 'Empleados',
-                        subtitle: 'Gestionar empleados',
-                        onTap: () => context.push('/employees'),
-                      ),
-                      _buildDivider(),
-                      _buildArrowTile(
-                        icon: Icons.storefront_outlined,
-                        title: 'Vendedores',
-                        subtitle: 'Gestionar vendedores',
-                        onTap: () => context.push('/sellers'),
-                      ),
-                      _buildDivider(),
-                      _buildArrowTile(
-                        icon: Icons.person_pin_outlined,
-                        title: 'Clientes',
-                        subtitle: 'Gestionar clientes',
-                        onTap: () => context.push('/recipients'),
-                      ),
-                      _buildDivider(),
-                      _buildArrowTile(
-                        icon: Icons.account_balance_outlined,
-                        title: 'Cuentas bancarias',
-                        subtitle: 'Gestionar cuentas bancarias',
-                        onTap: () => context.push('/bank_accounts'),
-                      ),
-                      _buildDivider(),
-                      _buildArrowTile(
-                        icon: Icons.qr_code_2_outlined,
-                        title: 'QR de empresa',
-                        subtitle: 'Códigos QR para vendedores y clientes',
-                        onTap: () => context.push('/company/qr'),
-                      ),
-                    ],
-                  ),
+                  if (showAdminSection) ...[
+                    const SizedBox(height: 18),
+                    _buildSectionTitle('Administración'),
+                    const SizedBox(height: 10),
+                    _buildGroupCard(
+                      children: [
+                        _buildArrowTile(
+                          icon: Icons.people_outline_rounded,
+                          title: 'Empleados',
+                          subtitle: 'Gestionar empleados',
+                          onTap: () => context.push(AppRoutes.employees),
+                        ),
+                        _buildDivider(),
+                        _buildArrowTile(
+                          icon: Icons.storefront_outlined,
+                          title: 'Vendedores',
+                          subtitle: 'Gestionar vendedores',
+                          onTap: () => context.push(AppRoutes.sellers),
+                        ),
+                        _buildDivider(),
+                        _buildArrowTile(
+                          icon: Icons.person_pin_outlined,
+                          title: 'Clientes',
+                          subtitle: 'Gestionar clientes',
+                          onTap: () => context.push(AppRoutes.recipients),
+                        ),
+                        _buildDivider(),
+                        _buildArrowTile(
+                          icon: Icons.account_balance_outlined,
+                          title: 'Cuentas bancarias',
+                          subtitle: 'Gestionar cuentas bancarias',
+                          onTap: () => context.push(AppRoutes.bankAccounts),
+                        ),
+                        _buildDivider(),
+                        _buildArrowTile(
+                          icon: Icons.directions_car_outlined,
+                          title: 'Vehículos',
+                          subtitle: 'Flota de la empresa',
+                          onTap: () => context.push(AppRoutes.vehicles),
+                        ),
+                        _buildDivider(),
+                        _buildArrowTile(
+                          icon: Icons.qr_code_2_outlined,
+                          title: 'QR de empresa',
+                          subtitle: 'Códigos QR para vendedores y clientes',
+                          onTap: () => context.push(AppRoutes.companyQr),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 18),
                   _buildSectionTitle('Preferencias'),
                   const SizedBox(height: 10),

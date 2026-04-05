@@ -21,6 +21,8 @@ import 'features/collection_points/data/collection_points_service.dart';
 import 'features/collection_points/presentation/providers/collection_points_provider.dart';
 import 'features/delivery_points/data/delivery_points_service.dart';
 import 'features/delivery_points/presentation/providers/delivery_points_provider.dart';
+import 'features/vehicles/data/vehicles_service.dart';
+import 'features/vehicles/presentation/providers/vehicles_provider.dart';
 import 'features/packages/data/packages_service.dart';
 import 'features/packages/presentation/providers/packages_provider.dart';
 import 'features/shipments/data/shipments_service.dart';
@@ -66,6 +68,8 @@ void main() async {
         ChangeNotifierProvider(
             create: (_) =>
                 DeliveryPointsProvider(DeliveryPointsService(dioClient.dio))),
+        ChangeNotifierProvider(
+            create: (_) => VehiclesProvider(VehiclesService(dioClient.dio))),
         ChangeNotifierProvider(
             create: (_) => PackagesProvider(PackagesService(dioClient.dio))),
         ChangeNotifierProvider(

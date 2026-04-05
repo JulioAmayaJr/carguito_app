@@ -26,9 +26,10 @@ class PlatformProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateConfig(double fee, String currency) async {
+  Future<bool> updateConfig(
+      double fee, String currency, String vehiclePlate, int odometer) async {
     try {
-      await _service.updateConfig(fee, currency);
+      await _service.updateConfig(fee, currency, vehiclePlate, odometer);
       await loadData();
       return true;
     } catch (e) {

@@ -9,9 +9,14 @@ class PlatformService {
     return res.data;
   }
 
-  Future<Map<String, dynamic>> updateConfig(double fee, String currency) async {
-    final res = await _dio.put('/platform/config',
-        data: {'default_service_fee_amount': fee, 'fee_currency': currency});
+  Future<Map<String, dynamic>> updateConfig(
+      double fee, String currency, String vehiclePlate, int odometer) async {
+    final res = await _dio.put('/platform/config', data: {
+      'default_service_fee_amount': fee,
+      'fee_currency': currency,
+      'vehicle_plate': vehiclePlate,
+      'odometer': odometer,
+    });
     return res.data;
   }
 
